@@ -1,0 +1,10 @@
+{
+  "Parameters" : {
+    "KeyName": "yuki-rsa-key-20150326",
+    "DBPassword": "resetmebro",
+    "DBUser": "wpadmin",
+    "InstanceType": "m1.small",
+    "MultiAZDatabase": "true",
+    "WebServerCapacity": "2"
+  }
+}
