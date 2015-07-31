@@ -18,9 +18,22 @@ install_awscli () {
 }
 
 configure_awscli () { 
+  SCRIPT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
   if [ ! -e ~/.aws/config ] ; then
-    aws configure
-  else
+    if [ -e ${SCRIPT_DIR}/aws_config_template ] ; then
+	cat ${SCRIPT_DIR}/aws_config_template > ~/.aws/config
+	chmod 600 ~/.aws/config
+	config="YES"
+    fi
+  fi
+  if [ ! -e ~/.aws/credentials ] ; then
+    if [ -e ${SCRIPT_DIR}/aws_credentials_template ] ; then
+	cat ${SCRIPT_DIR}/aws_credentials_template > ~/.aws/credentials
+	chmod 600 ~/.aws/credentials
+	config="YES"
+    fi
+  fi
+  if [ "$config" != "YES" ] ; then
     echo "*** awscli already configured ***"
   fi
 }
