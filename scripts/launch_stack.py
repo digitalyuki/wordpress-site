@@ -4,9 +4,12 @@ import subprocess
 import argparse
 import os
 import json
+from datetime import datetime
 from pprint import pprint
 from subprocess import Popen, PIPE
 
+now = datetime.now()
+now_stamp = now.strftime('%Y%m%d-%H%M%S')
 stack_name = "HAWordpress"
 template_filename = "wordpress-multi-az-us-east-1-template.json"
 template_params_filename = "template_params.json"
@@ -14,10 +17,13 @@ template_file = os.path.join( os.getcwd(), template_filename )
 template_params_file = os.path.join( os.getcwd(), template_params_filename )
 
 def parse_it():
-  parser = argparse.ArgumentParser(description='Launch cloudformation stack')
+  parser = argparse.ArgumentParser(description='Launch cloudformation stack for highly available WordPress site.')
+  parser.add_argument('--stack_name', default="{0}-{1}".format(stack_name, now_stamp), type=str, help="Name of the stack that will be launched. \nDefault: %(default)s")
+  parser.add_argument('--template_file', default='{0}'.format(template_file), type=str, help="Full path to AWS template file, json required. \nDefault: %(default)s")
+  parser.add_argument('--template_params_file', default='{0}'.format(template_params_file), type=str, help="Full path to file with parameters specified required in AWS template. \nDefault: %(default)s")
   args = parser.parse_args()
 
-  return
+  return args
 
 def json_parse(thing_to_read, object_type = 'file'):
   if object_type == 'file':
@@ -29,15 +35,15 @@ def json_parse(thing_to_read, object_type = 'file'):
 
 
 def launch_stack():
-  template_params_json = json_parse(template_params_file)
+  template_params_json = json_parse(args.template_params_file)
   template_params = template_params_json['Parameters']
   template_param_list = []
   for key, value in template_params.items():
-    template_param_list.append('ParameterKey={0},ParameterValue={1}'.format(key,value) )
+    template_param_list.append('ParameterKey={0},ParameterValue="{1}"'.format(key,value) )
  
   cmd = [ 'aws', 'cloudformation', 'create-stack', 
-	'--stack-name', stack_name,
-	'--template-body', 'file://{0}'.format(template_file),
+	'--stack-name', args.stack_name,
+	'--template-body', 'file://{0}'.format(args.template_file),
         ]
   try: 
     template_param_list
@@ -66,7 +72,7 @@ def launch_stack():
 
 def check_stack():
   cmd = [ 'aws', 'cloudformation', 'describe-stacks',
-	'--stack-name', stack_name,
+	'--stack-name', args.stack_name,
 	]
   p = subprocess.Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
   output, err = p.communicate()
@@ -79,7 +85,7 @@ def check_stack():
   return return_code 
  
 if __name__ == "__main__":
-  #parse_it() #build this out to pass parameters manually or launch/delete/check/etc
+  args = parse_it() #build this out to pass parameters manually or launch/delete/check/etc
   if check_stack() == 255:
     print "check_stack is 255"
     launch_stack()
