@@ -117,6 +117,10 @@
       "Type": "String",
       "NoEcho": "true",
       "ConstraintDescription" : "Do your worst... you probably need a pretty badass password"
+    },
+    "ELBSSLCertificateId" : {
+      "Description": "SSL Certificate ID arn to associate with ELB",
+      "Type": "String"
     } 
   },
   "Mappings" : {
@@ -205,7 +209,14 @@
           "InstancePort" : "80",
           "Protocol" : "HTTP",
           "PolicyNames" : [ "CookieBasedPolicy" ]
-        } ],
+	 },
+	 {
+          "LoadBalancerPort" : "443",
+	  "InstancePort" : "80",
+	  "Protocol" : "SSL",
+          "SSLCertificateId" : { "Ref" : "ELBSSLCertificateId" }
+	 }
+	 ],
         "HealthCheck" : {
           "Target" : "HTTP:80/wordpress/wp-admin/install.php",
           "HealthyThreshold" : "2",
@@ -236,17 +247,18 @@
         "MaxSize" : "5",
         "DesiredCapacity" : { "Ref" : "WebServerCapacity" },
         "LoadBalancerNames" : [ { "Ref" : "ElasticLoadBalancer" } ]
+
       },
       "CreationPolicy" : {
         "ResourceSignal" : {
-          "Timeout" : "PT15M"
+          "Timeout" : "PT20M"
         }
       },
       "UpdatePolicy": {
         "AutoScalingRollingUpdate": {
           "MinInstancesInService": "1",
           "MaxBatchSize": "1",
-          "PauseTime" : "PT15M",
+          "PauseTime" : "PT20M",
           "WaitOnResourceSignals": "true"
         }
       }
@@ -256,8 +268,8 @@
    	"Type" : "AWS::AutoScaling::ScalingPolicy",
    	"Properties" : {
       		"AdjustmentType" : "ChangeInCapacity",
-      		"AutoScalingGroupName" :  { "Ref" : "LaunchConfig" },
-      		"Cooldown" : "1",
+      		"AutoScalingGroupName" :  { "Ref" : "WebServerGroup" },
+      		"Cooldown" : "60",
       		"ScalingAdjustment" : "1"
    	}
     },
@@ -266,14 +278,14 @@
    	"Properties": {
       		"EvaluationPeriods": "1",
       		"Statistic": "Average",
-      		"Threshold": "10",
+      		"Threshold": "50",
       		"AlarmDescription": "Alarm if CPU too high or metric disappears indicating instance is down",
       		"Period": "60",
       		"AlarmActions": [ { "Ref": "ScaleUpPolicy" } ],
       		"Namespace": "AWS/EC2",
       		"Dimensions": [ {
          		"Name": "AutoScalingGroupName",
-         		"Value":  { "Ref" : "LaunchConfig" }
+         		"Value":  { "Ref" : "WebServerGroup" }
       		} ],
       		"ComparisonOperator": "GreaterThanThreshold",
       		"MetricName": "CPUUtilization"
@@ -378,7 +390,9 @@
 		  "/tmp/run_wpi-cli" : {
 			"content": { "Fn::Join" : [ "", [
 			  "#!/bin/bash\n",
-			  "wp core install ", "--title=\"", { "Ref" : "WPSiteTitle" }, "\"", 
+			  "/usr/local/bin/wp core install ", "--title=\"", { "Ref" : "WPSiteTitle" }, "\"", 
+			  " --path=/var/www/html/wordpress", 
+			  " --url=http://", { "Fn::GetAtt" : [ "ElasticLoadBalancer", "DNSName" ]}, "/wordpress",	
 			  " --admin_name=", { "Ref" : "WPAdminName" },
 			  " --admin_email=", { "Ref" : "WPEmail" },  
 			  " --admin_password=", { "Ref" : "WPPassword" }, "\n"
@@ -394,7 +408,7 @@
 			"cwd" : "/tmp"
 		  },
 		  "02_run_wp-cli" : {
-			"cwd" : "/tmp",
+			"cwd" : "/var/www/html/wordpress",
 			"test" : "php /usr/local/bin/wp --info",
 			"command" : "/tmp/run_wpi-cli"
 		  }
