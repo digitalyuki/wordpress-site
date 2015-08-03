@@ -5,6 +5,11 @@
     "DBUser": "wpadmin",
     "InstanceType": "m1.small",
     "MultiAZDatabase": "true",
-    "WebServerCapacity": "2"
+    "WebServerCapacity": "2",
+    "WPSiteTitle": "YuKatias Future Home on the Web",
+    "WPAdminName": "yukatia",
+    "WPEmail": "yukatia1@gmail.com",
+    "WPPassword": "resetme123456psych"
+
   }
 }

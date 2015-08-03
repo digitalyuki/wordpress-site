@@ -93,9 +93,31 @@
       "MinValue": "5",
       "MaxValue": "1024",
       "ConstraintDescription" : "must be between 5 and 1024Gb."
-    }
-  },
+    },
 
+    "WPSiteTitle" : {
+      "Default": "Website of Awesome",
+      "Description" : "What would you like the website title to be",
+      "Type": "String",
+      "ConstraintDescription" : "should reflect your convictions of title"
+    },
+    "WPAdminName" : {
+      "Default": "adminofsite",
+      "Description" : "Admin name for administering the site.",
+      "Type": "String",
+      "ConstraintDescription" : "should be limited to alphanumeric characters"
+    },
+    "WPEmail" : {
+      "Description": "Admin email - you will be emailed when stuff goes wrong...",
+      "Type": "String",
+      "ConstraintDescription" : "valid email required."
+    },
+    "WPPassword" : {
+      "Description": "Admin password... this should def not be resetme123456",
+      "Type": "String",
+      "ConstraintDescription" : "Do your worst... you probably need a pretty badass password"
+    } 
+  },
   "Mappings" : {
     "AWSInstanceType2Arch" : {
       "t1.micro"    : { "Arch" : "PV64"   },
@@ -234,7 +256,7 @@
       "Metadata" : {
         "AWS::CloudFormation::Init" : {
           "configSets" : {
-            "wordpress_install" : ["install_cfn", "install_wordpress" ]
+            "wordpress_install" : ["install_cfn", "install_wordpress", "run_wpi-cli" ]
           },
           "install_cfn" : {
             "files": {
@@ -310,7 +332,45 @@
                 "httpd" : { "enabled" : "true", "ensureRunning" : "true" }
               }
             }
-          }
+          },
+	  "run_wpi-cli" : {
+		"files" : {
+		  "/tmp/install_wpi-cli" : {
+			"content": { "Fn::Join" : [ "", [
+			  "#!/bin/bash\n",
+			  "curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar\n",
+			  "chmod +x /tmp/wp-cli.phar\n",
+			  "mv /tmp/wp-cli.phar /usr/local/bin/wp\n"
+			]]},
+			"mode" : "000500",
+			"owner" : "root",
+			"group" : "root"
+		  },
+		  "/tmp/run_wpi-cli" : {
+			"content": { "Fn::Join" : [ "", [
+			  "#!/bin/bash\n",
+			  "wp core install ", "--title=\"", { "Ref" : "WPSiteTitle" }, "\"", 
+			  " --admin_name=", { "Ref" : "WPAdminName" },
+			  " --admin_email=", { "Ref" : "WPEmail" },  
+			  " --admin_password=", { "Ref" : "WPPassword" }, "\n"
+			  ]]},
+			  "mode" : "000500",
+			  "owner" : "root",
+			  "group" : "root"
+		  }
+		},
+		"commands" : {
+		  "01_install_wp-cli" : {
+			"command" : "/tmp/install_wpi-cli",
+			"cwd" : "/tmp"
+		  },
+		  "02_run_wp-cli" : {
+			"cwd" : "/tmp",
+			"test" : "php wp --info",
+			"command" : "/tmp/run_wpi-cli"
+		  }
+		}
+	    }
         }
       },
       "Properties": {
