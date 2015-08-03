@@ -1,0 +1,5 @@
+openssl genrsa -out my-private-key.pem 2048
+openssl req -sha256 -new -key my-private-key.pem -out my-public-key.pem -days 256 -subj "/C=US/ST=New York/L=New York/O=IT/CN=yukatia.org" -out csr.pem
+openssl x509 -req -days 365 -in csr.pem -signkey my-private-key.pem -out my-certificate.pem
+aws iam upload-server-certificate --server-certificate-name my-certificate.pem --certificate-body file://my-certificate.pem --private-key file://my-private-key.pem
+
