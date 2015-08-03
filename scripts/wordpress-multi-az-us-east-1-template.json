@@ -252,6 +252,34 @@
       }
     },
 
+    "ScaleUpPolicy" : {
+   	"Type" : "AWS::AutoScaling::ScalingPolicy",
+   	"Properties" : {
+      		"AdjustmentType" : "ChangeInCapacity",
+      		"AutoScalingGroupName" :  { "Ref" : "LaunchConfig" },
+      		"Cooldown" : "1",
+      		"ScalingAdjustment" : "1"
+   	}
+    },
+   "CPUAlarmHigh": {
+   	"Type": "AWS::CloudWatch::Alarm",
+   	"Properties": {
+      		"EvaluationPeriods": "1",
+      		"Statistic": "Average",
+      		"Threshold": "10",
+      		"AlarmDescription": "Alarm if CPU too high or metric disappears indicating instance is down",
+      		"Period": "60",
+      		"AlarmActions": [ { "Ref": "ScaleUpPolicy" } ],
+      		"Namespace": "AWS/EC2",
+      		"Dimensions": [ {
+         		"Name": "AutoScalingGroupName",
+         		"Value":  { "Ref" : "LaunchConfig" }
+      		} ],
+      		"ComparisonOperator": "GreaterThanThreshold",
+      		"MetricName": "CPUUtilization"
+   	}
+    }, 
+
     "LaunchConfig": {
       "Type" : "AWS::AutoScaling::LaunchConfiguration",
       "Metadata" : {
@@ -367,7 +395,7 @@
 		  },
 		  "02_run_wp-cli" : {
 			"cwd" : "/tmp",
-			"test" : "php wp --info",
+			"test" : "php /usr/local/bin/wp --info",
 			"command" : "/tmp/run_wpi-cli"
 		  }
 		}
