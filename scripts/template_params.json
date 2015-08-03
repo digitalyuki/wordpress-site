@@ -9,7 +9,7 @@
     "WPSiteTitle": "YuKatias Future Home on the Web",
     "WPAdminName": "yukatia",
     "WPEmail": "yukatia1@gmail.com",
-    "WPPassword": "resetme123456psych"
-
+    "WPPassword": "resetme123456psych",
+    "ELBSSLCertificateId": "arn:aws:iam::503262501960:server-certificate/my-certificate.pem"
   }
 }
