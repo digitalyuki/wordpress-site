@@ -115,6 +115,7 @@
     "WPPassword" : {
       "Description": "Admin password... this should def not be resetme123456",
       "Type": "String",
+      "NoEcho": "true",
       "ConstraintDescription" : "Do your worst... you probably need a pretty badass password"
     } 
   },
